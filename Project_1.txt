@@ -1,0 +1,164 @@
+git clone https://github.com/AjaySingala/P1-MovieLens
+
+
+unzip movies,ratings and tags using 
+--->unzip filename.zip
+
+Coping movies, ratings and tags files from local to hdfs
+--->hdfs dfs -put <path in local> <path in hdfs>
+
+CREATING TABLES IN HIVE and LOADING DATA INTO IT:
+1.Movies table:
+  CREATE TABLE movies(id int COMMENT "movie id", name string COMMENT "name of the movie", genres string COMMENT "genres of the movie")
+  row format delimited
+  fields terminated by ',';
+
+  LOAD DATA INPATH '/user/maria_dev/Movies/movies.csv'
+  INTO TABLE movies;
+
+2.Ratings table:
+  CREATE TABLE ratings(userid int, movieid int,rating int,time int)
+  row format delimited
+  fields terminated by ',';
+  
+  LOAD DATA INPATH '/user/maria_dev/Movies/movies.csv'
+  INTO TABLE ratings;
+
+3.Tags table:
+CREATE TABLE tags(userid int, movieid int,tag string,time int)
+row format delimited
+fields terminated by ',';
+
+  LOAD DATA INPATH '/user/maria_dev/Movies/movies.csv'
+  INTO TABLE movies;
+
+
+TASKS:
+ 
+
+01. first 5 entries from movies table
+--->SELECT * FROM movies LIMIT 5;
+
+
+02. number of unique movies
+--->select count(distinct title) from movies;
+
+
+03. summary of ratings data
+--->SELECT min(rating),max(rating),avg(rating) from ratings;
+
+
+04. minimum rating given to a movie
+--->SELECT m.title,min(r.rating)
+    from movies as m
+    INNER JOIN ratings as r ON m.movieid=r.movieid
+    group by title,rating
+    having min(r.rating) = 3.5;
+
+
+05. maximum rating given to a movie
+--->SELECT m.title,max(r.rating)
+    from movies as m
+    INNER JOIN ratings as r ON m.movieid=r.movieid
+    group by title,rating;
+
+
+06. is any row null in tags
+--->SELECT * FROM tags WHERE tag IS NULL;
+
+--->SELECT count(tag) from tags where tag IS NULL or time IS NULL or userid IS NULL or movieid IS NULL;
+
+	
+07. number of unique tags 
+--->SELECT count(DISTINCT tag) from tags;
+
+
+08. drop null rows from tags and create another table of the resulting rows
+--->CREATE TABLE nonull AS select * from tags where movieid IS NOT NULL AND
+    userid IS NOT NULL AND
+    movieid IS NOT NULL AND
+    time IS NOT NULL;
+
+
+09. filtering to get the list of drama movies
+--->SELECT * FROM movies where genres = 'Drama';
+	
+--->SELECT * FROM movies where genres RLIKE 'Drama';
+
+
+10. total number of drama movies
+--->SELECT count(*) FROM movies where genres = 'Drama';
+	
+--->SELECT count(*) FROM movies where genres RLIKE 'Drama';
+
+
+11. filtering to get the list of comedy movies
+--->SELECT * FROM movies where genres = 'Comedy';
+	
+--->SELECT * FROM movies where genres RLIKE 'Comedy';
+
+	
+12. total no. of comedy movies
+--->SELECT count(*) FROM movies where genres = 'Comedy';
+	
+--->SELECT count(*) FROM movies where genres RLIKE 'Comedy';
+
+
+13. search movie id by tag search
+--->SELECT movieid,tag FROM tags WHERE tag = 'bollywood';
+
+
+14. displays first 5 data from ratings table
+--->SELECT * FROM ratings LIMIT 5;
+
+
+15. merging two tables movies and ratings into a new table without the "timestamp" column from the ratings table.
+--->CREATE TABLE movies_rating AS select m.movieid,m.title,m.genres,r.userid,r.rating from movies m join ratings r on (m.movieid=r.movieid) limit 5; 
+
+
+16. display high rated movies (rating > 4)
+--->SELECT * FROM ratings where rating > 4;
+
+--->SELECT m.title ,r.rating
+    FROM movies as m
+    INNER JOIN ratings as r ON m.movieid=r.movieid
+    where rating > '4'
+    group by title,rating;
+
+
+17. display low rated movies (rating < 4)
+--->SELECT * FROM ratings where rating < 4;
+
+--->SELECT m.title ,r.rating
+    FROM movies as m
+    INNER JOIN ratings as r ON m.movieid=r.movieid
+    where rating < '4'
+    group by title,rating;
+
+
+18. total number of unique movie genres
+--->SELECT count(distinct g) FROM (select explode(genres) as g FROM movies) as e;  
+
+
+19. top 25 most rated movies
+--->select m.title,avg(r.rating) as e from ratings r, movies m 
+    where m.movieid=r.movieid 
+    group by r.movieid,m.title 
+    order by e desc limit 25;
+
+
+20. slicing out columns to display only title and genres columns from movies table
+--->SELECT title,genres FROM movies LIMIT 5;
+
+
+21. extract year from title of the movie
+--->SELECT substr(split(title, '\\(')[1],1,4) FROM movies LIMIT 5;
+
+
+22. count how many times each of genres occur
+--->SELECT movies.genres,count(genres) FROM movies GROUP BY movies.genres;
+
+
+23. Which movie received the highest number of ratings?
+--->select m.title, count(r.movieid) as e from movies m, ratings r                                                                                                    
+    where m.movieid=r.movieid group by r.movieid, m.title order by e desc limit 1;
